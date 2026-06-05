@@ -131,12 +131,12 @@
     .mobile-cta .k { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; }
     .mobile-cta .v { color:var(--gold); font-size:20px; font-weight:800; letter-spacing:-.04em; }
 
-    .wely-credit { margin-top:26px; display:flex; justify-content:center; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,.38); opacity:.82; }
-    .wely-credit img { height:56px; width:auto; display:block; opacity:.88; }
+    .wely-credit { margin-top:26px; margin-bottom:80px; display:flex; justify-content:center; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,.38); opacity:.82; }
+    .wely-credit img { height:82px; width:auto; display:block; opacity:.88; }
     .wely-credit span { white-space:nowrap; }
     @media (max-width:1140px) { .hero,.layout { grid-template-columns:1fr; } .sticky { position:static; } }
     @media (max-width:920px) { .page { padding:18px 14px 106px; } .hero-title { font-size:30px; } .estimate-value { font-size:44px; } .estimate-grid,.tabs,.grid-3,.grid-4,.type-grid,.item-meta-row,.repair-grid,.how-grid { grid-template-columns:1fr 1fr; } .mobile-cta { display:flex; } }
-    @media (max-width:620px) { .wely-credit img { height:44px; } .hero-title { font-size:24px; } .hero-desc { font-size:14px; } .brand-title { font-size:21px; } .estimate-grid,.tabs,.grid-2,.grid-3,.grid-4,.type-grid,.item-meta-row,.repair-grid,.how-grid { grid-template-columns:1fr; } .item-row-top { align-items:flex-start; } .btn-row .btn { width:100%; } .mobile-cta .btn { width:auto; } }
+    @media (max-width:620px) { .wely-credit img { height:66px; } .hero-title { font-size:24px; } .hero-desc { font-size:14px; } .brand-title { font-size:21px; } .estimate-grid,.tabs,.grid-2,.grid-3,.grid-4,.type-grid,.item-meta-row,.repair-grid,.how-grid { grid-template-columns:1fr; } .item-row-top { align-items:flex-start; } .btn-row .btn { width:100%; } .mobile-cta .btn { width:auto; } }
   </style>
 </head>
 <body>
@@ -152,13 +152,14 @@
       <div class="pill"><span class="dot"></span> Valor estimado al instante</div>
     </div>
     <div style="background:linear-gradient(135deg,#1a7a3c 0%,#25a050 100%);color:#fff;text-align:center;padding:12px 16px;font-size:14px;font-weight:700;letter-spacing:.01em;border-bottom:2px solid #1a7a3c;">
-      ✅ Todos los servicios incluyen 3 años de garantía &nbsp;•&nbsp; Todos los medios de pago &nbsp;•&nbsp; Cuotas sin intereses
+      ✅ 3 años de garantía en cada producto &nbsp;•&nbsp; Instalación profesional incluida sin costo &nbsp;•&nbsp; Visita técnica gratuita &nbsp;•&nbsp; Todos los medios de pago &nbsp;•&nbsp; Cuotas sin intereses
     </div>
 
     <div class="hero">
       <div class="hero-card">
         <div class="hero-title">Cotiza tu servicio en minutos</div>
         <div class="hero-desc">Elige el servicio que necesitas, completa los datos y obtén una cotización estimada al instante. También puedes combinar distintos servicios y ver el total actualizado en tiempo real.</div>
+        <div class="help-inline" style="margin-top:16px;">✔ <strong>Instalación y visita técnica incluidas al comprar tus cortinas:</strong> Cuando adquieres cortinas con nosotros, la visita al domicilio y la instalación están <strong>sin costo adicional</strong> en la Región Metropolitana. Para otras regiones, aplica un costo de traslado adicional.</div>
         <div class="how-grid">
           <div class="how-step"><strong>1. Elige un servicio</strong><span>Selecciona si quieres cotizar cortinas nuevas, lavado o reparaciones.</span></div>
           <div class="how-step"><strong>2. Agrega lo que necesites</strong><span>Puedes sumar más de una cortina, más de un lavado o varias reparaciones en la misma cotización.</span></div>
@@ -274,9 +275,26 @@
             <tr><td>Subtotal cortinas <span class="label-sub" id="sumCurtainsMeta">0 ítems</span></td><td id="sumCurtains">$0</td></tr>
             <tr><td>Subtotal lavado <span class="label-sub" id="sumWashMeta">0 ítems</span></td><td id="sumWash">$0</td></tr>
             <tr><td>Subtotal reparaciones <span class="label-sub" id="sumRepairsMeta">0 seleccionadas</span></td><td id="sumRepairs">$0</td></tr>
+            <tr id="rowTransport" style="display:none"><td>Traslado estimado <span class="label-sub" id="sumTransportMeta"></span></td><td id="sumTransport">$0</td></tr>
             <tr class="total"><td>Total final</td><td id="sumTotal">$0</td></tr>
           </table>
           <div class="field" style="margin-top:16px;">
+            <label class="label">📍 Región del servicio</label>
+            <select id="regionSelect">
+              <option value="">Selecciona tu región…</option>
+              <option value="rm">Región Metropolitana — Sin costo adicional</option>
+              <option value="valparaiso">Región de Valparaíso</option>
+              <option value="ohiggins">Región de O'Higgins</option>
+            </select>
+          </div>
+          <div class="field" id="comunaField" style="display:none">
+            <label class="label">Comuna</label>
+            <select id="comunaSelect">
+              <option value="">Selecciona tu comuna…</option>
+            </select>
+          </div>
+          <div id="transportNote" style="display:none" class="help-inline"></div>
+          <div class="field" style="margin-top:12px;">
             <label class="label" for="customerMessage">Comentarios (opcional)</label>
             <textarea id="customerMessage" placeholder="Ej: necesito visita previa o quiero coordinar retiro por la mañana."></textarea>
           </div>
@@ -338,13 +356,91 @@
         { key: 'tubo', name: 'Cambio de tubo', price: 8000 },
         { key: 'ajuste', name: 'Ajuste de medida', price: 30000 },
         { key: 'hilachas', name: 'Corte y sellado de hilachas', price: 5000 },
-        { key: 'instalacion', name: 'Instalación por cortina', price: 12000 },
+        { key: 'instalacion', name: 'Instalación por cortina', note: 'Para clientes con cortinas propias', price: 12000 },
         { key: 'altura', name: 'Instalación en altura', price: 18000 }
       ]
     };
 
+    const FUEL_PRICE = 1540;
+    const CONSUMPTION = 10;
+    const REGIONS = {
+      rm: { name: 'Región Metropolitana', free: true, comunas: [] },
+      valparaiso: { name: 'Región de Valparaíso', free: false, comunas: [
+        { name: 'Valparaíso', km: 120, peajes: 7500 },
+        { name: 'Viña del Mar', km: 118, peajes: 7500 },
+        { name: 'Concón', km: 115, peajes: 7500 },
+        { name: 'Quilpué', km: 107, peajes: 6500 },
+        { name: 'Villa Alemana', km: 102, peajes: 6500 },
+        { name: 'Casablanca', km: 87, peajes: 5000 },
+        { name: 'Quillota', km: 93, peajes: 6500 },
+        { name: 'La Calera', km: 87, peajes: 6000 },
+        { name: 'La Cruz', km: 90, peajes: 6000 },
+        { name: 'Hijuelas', km: 83, peajes: 5500 },
+        { name: 'Nogales', km: 85, peajes: 5500 },
+        { name: 'Limache', km: 105, peajes: 6500 },
+        { name: 'Olmué', km: 110, peajes: 6000 },
+        { name: 'Quintero', km: 123, peajes: 7500 },
+        { name: 'Puchuncaví', km: 125, peajes: 7500 },
+        { name: 'San Antonio', km: 100, peajes: 4500 },
+        { name: 'Cartagena', km: 113, peajes: 5000 },
+        { name: 'El Quisco', km: 116, peajes: 5000 },
+        { name: 'El Tabo', km: 120, peajes: 5000 },
+        { name: 'Algarrobo', km: 107, peajes: 5000 },
+        { name: 'Santo Domingo', km: 125, peajes: 4500 },
+        { name: 'Los Andes', km: 77, peajes: 5500 },
+        { name: 'Calle Larga', km: 79, peajes: 5500 },
+        { name: 'Rinconada', km: 74, peajes: 5000 },
+        { name: 'San Esteban', km: 81, peajes: 5500 },
+        { name: 'San Felipe', km: 88, peajes: 5500 },
+        { name: 'Catemu', km: 83, peajes: 5000 },
+        { name: 'Llay-Llay', km: 82, peajes: 5000 },
+        { name: 'Panquehue', km: 88, peajes: 5500 },
+        { name: 'Putaendo', km: 100, peajes: 5000 },
+        { name: 'Santa María', km: 95, peajes: 5500 },
+        { name: 'La Ligua', km: 147, peajes: 7500 },
+        { name: 'Cabildo', km: 128, peajes: 7000 },
+        { name: 'Petorca', km: 159, peajes: 7500 },
+        { name: 'Papudo', km: 168, peajes: 7500 },
+        { name: 'Zapallar', km: 160, peajes: 7500 }
+      ]},
+      ohiggins: { name: "Región de O'Higgins", free: false, comunas: [
+        { name: 'Rancagua', km: 87, peajes: 4500 },
+        { name: 'Machalí', km: 90, peajes: 4500 },
+        { name: 'Graneros', km: 80, peajes: 4000 },
+        { name: 'San Francisco de Mostazal', km: 74, peajes: 3500 },
+        { name: 'Codegua', km: 86, peajes: 4000 },
+        { name: 'Olivar', km: 88, peajes: 4500 },
+        { name: 'Requínoa', km: 97, peajes: 4500 },
+        { name: 'Rengo', km: 115, peajes: 4500 },
+        { name: 'Malloa', km: 111, peajes: 4500 },
+        { name: 'Coinco', km: 114, peajes: 4500 },
+        { name: 'Coltauco', km: 120, peajes: 4500 },
+        { name: 'Doñihue', km: 112, peajes: 4500 },
+        { name: 'Las Cabras', km: 103, peajes: 4000 },
+        { name: 'Peumo', km: 118, peajes: 4500 },
+        { name: 'Pichidegua', km: 125, peajes: 4500 },
+        { name: 'San Vicente de Tagua Tagua', km: 113, peajes: 4500 },
+        { name: 'Quinta de Tilcoco', km: 108, peajes: 4500 },
+        { name: 'San Fernando', km: 138, peajes: 5000 },
+        { name: 'Chimbarongo', km: 128, peajes: 5000 },
+        { name: 'Nancagua', km: 132, peajes: 5000 },
+        { name: 'Santa Cruz', km: 142, peajes: 5000 },
+        { name: 'Placilla', km: 136, peajes: 5000 },
+        { name: 'Lolol', km: 170, peajes: 5500 },
+        { name: 'Pumanque', km: 180, peajes: 5500 },
+        { name: 'Palmilla', km: 155, peajes: 5000 },
+        { name: 'Peralillo', km: 160, peajes: 5000 },
+        { name: 'Marchigüe', km: 178, peajes: 5500 },
+        { name: 'Paredones', km: 205, peajes: 5500 },
+        { name: 'Litueche', km: 170, peajes: 5500 },
+        { name: 'La Estrella', km: 175, peajes: 5500 },
+        { name: 'Navidad', km: 175, peajes: 5500 },
+        { name: 'Pichilemu', km: 196, peajes: 5500 }
+      ]}
+    };
+
     const STORAGE_KEY = 'wely_roller_quote_final_v2';
-    const defaultState = { activeTab: 'curtains', curtainType: 'blackout', curtains: [], washes: [], repairs: [], repairQty: {}, customerMessage: '' };
+    const defaultState = { activeTab: 'curtains', curtainType: 'blackout', curtains: [], washes: [], repairs: [], repairQty: {}, customerMessage: '', region: '', comuna: '' };
     let state = loadState();
 
     function loadState() {
@@ -504,7 +600,7 @@
         return `<div class="repair-item">
           <label class="repair-label">
             <input type="checkbox" data-repair="${item.key}" ${checked ? 'checked' : ''} />
-            <span class="repair-name">${item.name}</span>
+            <span class="repair-name">${item.name + (item.note ? '<span style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:2px;">' + item.note + '</span>' : '')}</span>
             <span class="repair-price">${money(item.price)} c/u</span>
           </label>
           <div class="repair-stepper" style="display:${checked ? 'flex' : 'none'}">
@@ -555,6 +651,62 @@
       if (!calc.items.length) { wrap.innerHTML = '<div class="empty">Aún no has seleccionado reparaciones.</div>'; return; }
       wrap.innerHTML = `<div class="item-row"><div class="item-row-top"><div class="item-main"><div class="item-row-title">Servicios seleccionados</div><div class="item-row-sub">${calc.items.length} servicio(s) incorporados a tu cotización.</div></div><div class="price-pill"><span class="currency">$</span><span class="value">${currency.format(Math.round(calc.subtotal))}</span></div></div><div class="list" style="margin-top:0;">${calc.items.map(item => `<div class="mini-detail"><div class="k">Servicio</div><div class="v">${item.name} — ${money(item.price)} × ${item.qty} = ${money(item.total)}</div></div>`).join('')}</div></div>`;
     }
+    function updateLocationUI() {
+      const regionSel = document.getElementById('regionSelect');
+      const comunaField = document.getElementById('comunaField');
+      const comunaSel = document.getElementById('comunaSelect');
+      const transportNote = document.getElementById('transportNote');
+      if (!regionSel) return;
+      regionSel.value = state.region || '';
+      if (!state.region) {
+        comunaField.style.display = 'none';
+        transportNote.style.display = 'none';
+        return;
+      }
+      if (state.region === 'rm') {
+        comunaField.style.display = 'none';
+        transportNote.innerHTML = '✅ <strong>Instalación gratuita en toda la Región Metropolitana</strong> — La visita técnica y la instalación no tienen costo adicional.';
+        transportNote.style.display = '';
+        transportNote.className = 'help-inline';
+        return;
+      }
+      const regionData = REGIONS[state.region];
+      if (regionData && regionData.comunas.length) {
+        comunaField.style.display = '';
+        const opts = regionData.comunas.map(c =>
+          '<option value="' + c.name + '"' + (state.comuna === c.name ? ' selected' : '') + '>' + c.name + '</option>'
+        ).join('');
+        comunaSel.innerHTML = '<option value="">Selecciona tu comuna…</option>' + opts;
+        if (state.comuna) {
+          const cd = regionData.comunas.find(c => c.name === state.comuna);
+          if (cd) {
+            const distRT = cd.km * 2;
+            const fuelCost = (distRT / 100) * CONSUMPTION * FUEL_PRICE;
+            const cost = Math.round((fuelCost + cd.peajes) / 500) * 500;
+            transportNote.innerHTML = '🚗 <strong>Costo de traslado estimado: $' + new Intl.NumberFormat("es-CL").format(cost) + '</strong> — Calculado en base a distancia y condiciones de ruta. Este valor se suma al total de tu cotización.';
+            transportNote.style.display = '';
+            transportNote.className = 'help-inline';
+          } else {
+            transportNote.style.display = 'none';
+          }
+        } else {
+          transportNote.innerHTML = '⚠️ Selecciona tu comuna para calcular el costo de traslado estimado.';
+          transportNote.style.display = '';
+          transportNote.className = 'help-inline warning';
+        }
+      }
+    }
+    function computeTransport() {
+      if (!state.region || state.region === 'rm' || !state.comuna) return { cost: 0, label: '' };
+      const regionData = REGIONS[state.region];
+      if (!regionData) return { cost: 0, label: '' };
+      const cd = regionData.comunas.find(c => c.name === state.comuna);
+      if (!cd) return { cost: 0, label: '' };
+      const distRT = cd.km * 2;
+      const fuelCost = (distRT / 100) * CONSUMPTION * FUEL_PRICE;
+      const cost = Math.round((fuelCost + cd.peajes) / 500) * 500;
+      return { cost, label: state.comuna };
+    }
     function computeTotals() {
       const curtains = state.curtains.map(computeCurtain);
       const curtainSubtotal = curtains.reduce((sum, item) => sum + item.total, 0);
@@ -563,7 +715,8 @@
       const washSubtotal = washes.reduce((sum, item) => sum + item.total, 0);
       const washQty = washes.reduce((sum, item) => sum + item.qty, 0);
       const repairs = computeRepairs();
-      return { curtains: { items: curtains, subtotal: curtainSubtotal, qty: curtainQty }, wash: { items: washes, subtotal: washSubtotal, totalQty: washQty }, repairs, total: curtainSubtotal + washSubtotal + repairs.subtotal };
+      const transport = computeTransport();
+      return { curtains: { items: curtains, subtotal: curtainSubtotal, qty: curtainQty }, wash: { items: washes, subtotal: washSubtotal, totalQty: washQty }, repairs, transport, total: curtainSubtotal + washSubtotal + repairs.subtotal + transport.cost };
     }
     function renderSummary(calc) {
       document.getElementById('heroTotal').textContent = money(calc.total);
@@ -577,6 +730,14 @@
       document.getElementById('sumWashMeta').textContent = `${calc.wash.items.length} ítem(s) · ${calc.wash.totalQty} unidad(es)`;
       document.getElementById('sumRepairs').textContent = money(calc.repairs.subtotal);
       document.getElementById('sumRepairsMeta').textContent = `${calc.repairs.items.length} seleccionada(s)`;
+      const rowTr = document.getElementById('rowTransport');
+      if (calc.transport && calc.transport.cost > 0) {
+        rowTr.style.display = '';
+        document.getElementById('sumTransport').textContent = money(calc.transport.cost);
+        document.getElementById('sumTransportMeta').textContent = calc.transport.label;
+      } else {
+        rowTr.style.display = 'none';
+      }
       document.getElementById('sumTotal').textContent = money(calc.total);
       document.getElementById('mobileTotal').textContent = money(calc.total);
     }
@@ -590,11 +751,14 @@
       renderRepairSummary(calc.repairs);
       renderSummary(calc);
       document.getElementById('customerMessage').value = state.customerMessage || '';
+      updateLocationUI();
       setActiveTab(state.activeTab || 'curtains');
       saveState();
     }
 
     function buildWhatsappSummary(calc) {
+      const transport = calc.transport;
+      const regionName = state.region ? (REGIONS[state.region] ? REGIONS[state.region].name : '') : '';
       const lines = [
         'Hola, quiero enviar mi cotización.',
         '',
@@ -602,7 +766,9 @@
         `- Subtotal cortinas: ${money(calc.curtains.subtotal)}`,
         `- Subtotal lavado: ${money(calc.wash.subtotal)}`,
         `- Subtotal reparaciones: ${money(calc.repairs.subtotal)}`,
-        `- Total final: ${money(calc.total)}`
+        ...(transport && transport.cost > 0 ? [`- Traslado estimado: ${money(transport.cost)} (${transport.label})`] : []),
+        `- Total final: ${money(calc.total)}`,
+        ...(regionName ? [`- Región: ${regionName}${state.comuna ? ' / ' + state.comuna : ''}`] : [])
       ];
 
       if (calc.curtains.items.length) {
@@ -653,6 +819,15 @@
 
     function bindEvents() {
       document.getElementById('addCurtainBtn').addEventListener('click', addCurtain);
+      document.getElementById('regionSelect').addEventListener('change', function() {
+        state.region = this.value;
+        state.comuna = '';
+        renderAll();
+      });
+      document.getElementById('comunaSelect').addEventListener('change', function() {
+        state.comuna = this.value;
+        renderAll();
+      });
       document.getElementById('clearCurtainBtn').addEventListener('click', clearCurtainForm);
       document.getElementById('addWashBtn').addEventListener('click', addWash);
       document.getElementById('clearWashBtn').addEventListener('click', clearWashForm);
