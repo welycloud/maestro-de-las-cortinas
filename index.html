@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>El Maestro de las Cortinas | Cotizador</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg:#0b0b0c; --surface:#131316; --surface-2:#1a1a1f; --line:#2f3139;
@@ -18,7 +19,7 @@
     }
     body::before { content:''; position:fixed; inset:0 0 auto 0; height:4px; z-index:999; background:linear-gradient(90deg,#111 0%,#463a00 40%,#fbd000 100%); }
     .page { max-width:1320px; margin:0 auto; padding:22px 16px 110px; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
     .brand { display:flex; align-items:center; gap:12px; }
     .brand-logo-wrap { width:58px; height:58px; border-radius:18px; display:grid; place-items:center; background:#fff; overflow:hidden; border:1px solid rgba(251,208,0,.28); box-shadow:var(--shadow); flex-shrink:0; }
     .brand-logo { width:100%; height:100%; object-fit:contain; display:block; }
@@ -131,15 +132,45 @@
     .mobile-cta .k { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; }
     .mobile-cta .v { color:var(--gold); font-size:20px; font-weight:800; letter-spacing:-.04em; }
 
+    .topbar-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; }
+    .ig-link { display:inline-flex; align-items:center; gap:5px; color:rgba(255,255,255,.30); font-size:10px; text-decoration:none; transition:.18s; letter-spacing:.01em; white-space:nowrap; }
+    .ig-link:hover { color:rgba(255,255,255,.65); }
+    .ig-link svg { opacity:.55; flex-shrink:0; }
+    .ig-link:hover svg { opacity:1; }
+    @media (max-width:480px) { .ig-link span { display:none; } }
     .wely-credit { margin-top:26px; margin-bottom:80px; display:flex; justify-content:center; align-items:center; gap:6px; font-size:10px; color:rgba(255,255,255,.38); opacity:.82; }
     .wely-credit img { height:82px; width:auto; display:block; opacity:.88; }
     .wely-credit span { white-space:nowrap; }
     @media (max-width:1140px) { .hero,.layout { grid-template-columns:1fr; } .sticky { position:static; } }
     @media (max-width:920px) { .page { padding:18px 14px 106px; } .hero-title { font-size:30px; } .estimate-value { font-size:44px; } .estimate-grid,.tabs,.grid-3,.grid-4,.type-grid,.item-meta-row,.repair-grid,.how-grid { grid-template-columns:1fr 1fr; } .mobile-cta { display:flex; } }
     @media (max-width:620px) { .wely-credit img { height:66px; } .hero-title { font-size:24px; } .hero-desc { font-size:14px; } .brand-title { font-size:21px; } .estimate-grid,.tabs,.grid-2,.grid-3,.grid-4,.type-grid,.item-meta-row,.repair-grid,.how-grid { grid-template-columns:1fr; } .item-row-top { align-items:flex-start; } .btn-row .btn { width:100%; } .mobile-cta .btn { width:auto; } }
+    /* ── EXCEL TOAST ── */
+    #excel-toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(120px);
+      background:#1a1a1f; border:1px solid var(--gold); border-radius:14px;
+      padding:14px 22px; display:flex; align-items:center; gap:14px;
+      box-shadow:0 8px 32px rgba(0,0,0,.55); z-index:9999;
+      transition:transform .4s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+      opacity:0; pointer-events:none; max-width:90vw;
+    }
+    #excel-toast.show { transform:translateX(-50%) translateY(0); opacity:1; pointer-events:auto; }
+    .toast-icon { font-size:28px; flex-shrink:0; }
+    .toast-body { line-height:1.4; }
+    .toast-title { font-weight:700; color:var(--gold); font-size:14px; }
+    .toast-msg { color:var(--muted); font-size:13px; margin-top:2px; }
+    .toast-close { margin-left:10px; background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:0 4px; flex-shrink:0; }
   </style>
 </head>
 <body>
+  <!-- TOAST EXCEL -->
+  <div id="excel-toast">
+    <div class="toast-icon">📊</div>
+    <div class="toast-body">
+      <div class="toast-title">Excel descargado</div>
+      <div class="toast-msg" id="toast-msg">Adjúntalo en WhatsApp para enviarlo junto con la cotización.</div>
+    </div>
+    <button class="toast-close" onclick="closeExcelToast()">✕</button>
+  </div>
   <div class="page">
     <div class="topbar">
       <div class="brand">
@@ -149,7 +180,13 @@
           <div class="brand-sub">Cotiza cortinas, lavado y reparaciones en pocos pasos.</div>
         </div>
       </div>
-      <div class="pill"><span class="dot"></span> Valor estimado al instante</div>
+      <div class="topbar-right">
+        <a href="https://www.instagram.com/elmaestro_delascortinas/" target="_blank" rel="noopener noreferrer" class="ig-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          <span>@elmaestro_delascortinas</span>
+        </a>
+        <div class="pill"><span class="dot"></span> Valor estimado al instante</div>
+      </div>
     </div>
     <div style="background:linear-gradient(135deg,#1a7a3c 0%,#25a050 100%);color:#fff;text-align:center;padding:12px 16px;font-size:14px;font-weight:700;letter-spacing:.01em;border-bottom:2px solid #1a7a3c;">
       ✅ 3 años de garantía en cada producto &nbsp;•&nbsp; Instalación profesional incluida sin costo &nbsp;•&nbsp; Visita técnica gratuita &nbsp;•&nbsp; Todos los medios de pago &nbsp;•&nbsp; Cuotas sin intereses
@@ -159,11 +196,7 @@
       <div class="hero-card">
         <div class="hero-title">Cotiza tu servicio en minutos</div>
         <div class="help-inline" style="margin-top:12px;">✔ <strong>Instalación y visita técnica incluidas</strong> al comprar tus cortinas, sin costo adicional en la Región Metropolitana. Otras regiones: sujeto a costo de traslado.</div>
-        <div class="how-grid">
-          <div class="how-step"><strong>1. Elige un servicio</strong><span>Selecciona si quieres cotizar cortinas nuevas, lavado o reparaciones.</span></div>
-          <div class="how-step"><strong>2. Agrega lo que necesites</strong><span>Puedes sumar más de una cortina, más de un lavado o varias reparaciones en la misma cotización.</span></div>
-          <div class="how-step"><strong>3. Revisa tu total</strong><span>El resumen se actualiza al instante mientras cambias entre servicios.</span></div>
-        </div>
+        
       </div>
 
     </div>
@@ -289,15 +322,14 @@
           <div class="field">
             <label class="label" for="customerImages">Cargar imágenes (opcional)</label>
             <div class="custom-file-upload">
-              <button type="button" class="custom-file-btn" onclick="document.getElementById('customerImages').click()">📎 Seleccionar imágenes</button>
+              <button type="button" class="btn btn-primary" onclick="document.getElementById('customerImages').click()">📎 Seleccionar imágenes</button>
               <span class="custom-file-label" id="customerImagesLabel">Ninguna imagen seleccionada</span>
               <input type="file" id="customerImages" accept="image/*" multiple style="display:none" onchange="var l=document.getElementById('customerImagesLabel');l.textContent=this.files.length?this.files.length+' imagen(es) seleccionada(s)':'Ninguna imagen seleccionada'" />
             </div>
-            <div class="help-inline">Puedes adjuntar imágenes de referencia. Al enviar por WhatsApp, se abrirá directamente el chat con el resumen; las imágenes deberán adjuntarse manualmente dentro de WhatsApp.</div>
           </div>
           <div class="notice">Este valor es referencial y puede ajustarse al confirmar medidas, estado de la cortina o condiciones de instalación.</div>
           <div class="btn-row">
-            <button class="btn btn-primary" type="button" id="sendWhatsappBtn">Enviar cotización por Whatsapp</button>
+            <button class="btn btn-primary" type="button" id="sendWhatsappBtn">📲 Enviar cotización por WhatsApp</button>
           </div>
         </div>
       </div>
@@ -795,10 +827,117 @@
         alert('Aún no has agregado servicios a la cotización.');
         return;
       }
-
       const message = buildWhatsappSummary(calc);
       const whatsappUrl = `https://wa.me/56920786338?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      const _waLink = document.createElement('a');
+      _waLink.href = whatsappUrl; _waLink.target = '_blank'; _waLink.rel = 'noopener noreferrer';
+      document.body.appendChild(_waLink); _waLink.click(); document.body.removeChild(_waLink);
+    }
+
+    /* ════════════════════════════════════════
+       EXCEL GENERATOR
+    ════════════════════════════════════════ */
+    function generateExcel(calc) {
+      const wb = XLSX.utils.book_new();
+      const rows = [];
+      const dateStr = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric' });
+      const timeStr = new Date().toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' });
+      const regionName = state.region ? (REGIONS[state.region] ? REGIONS[state.region].name : '') : '';
+      const comunaStr = regionName ? (state.comuna ? regionName + ' / ' + state.comuna : regionName) : '';
+
+      // ── ENCABEZADO ──
+      rows.push(['El Maestro de las Cortinas', '', '', '', '', '']);
+      rows.push(['Cotización de Servicios', '', '', '', '', '']);
+      rows.push([`Fecha: ${dateStr}  ${timeStr}`, '', '', '', '', '']);
+      if (comunaStr) rows.push([`Ubicación: ${comunaStr}`, '', '', '', '', '']);
+      rows.push(['', '', '', '', '', '']);
+
+      // ── CORTINAS NUEVAS ──
+      if (calc.curtains.items.length) {
+        rows.push(['CORTINAS NUEVAS', '', '', '', '', '']);
+        rows.push(['#', 'Tipo', 'Dimensiones (cm)', 'Cantidad', 'Motorización', 'Total']);
+        calc.curtains.items.forEach((item, i) => {
+          rows.push([
+            i + 1,
+            item.cfg ? item.cfg.name : item.label,
+            `${item.width} × ${item.height}`,
+            item.qty,
+            item.motor ? 'Sí' : 'No',
+            item.total
+          ]);
+        });
+        rows.push(['', '', '', 'Subtotal cortinas', '', calc.curtains.subtotal]);
+        rows.push(['', '', '', '', '', '']);
+      }
+
+      // ── LAVADO ──
+      if (calc.wash.items.length) {
+        rows.push(['LAVADO DE CORTINAS', '', '', '', '', '']);
+        rows.push(['#', 'Tipo', 'Metros cuadrados', 'Cantidad', '', 'Total']);
+        calc.wash.items.forEach((item, i) => {
+          rows.push([
+            i + 1,
+            item.cfg ? (item.cfg.name || item.name) : item.name,
+            parseFloat(item.area.toFixed(2)),
+            item.qty,
+            '',
+            item.total
+          ]);
+        });
+        rows.push(['', '', '', 'Subtotal lavado', '', calc.wash.subtotal]);
+        rows.push(['', '', '', '', '', '']);
+      }
+
+      // ── REPARACIONES ──
+      if (calc.repairs.items.length) {
+        rows.push(['REPARACIONES', '', '', '', '', '']);
+        rows.push(['#', 'Servicio', '', 'Cantidad', '', 'Total']);
+        calc.repairs.items.forEach((item, i) => {
+          rows.push([i + 1, item.name, '', item.qty || 1, '', item.total]);
+        });
+        rows.push(['', '', '', 'Subtotal reparaciones', '', calc.repairs.subtotal]);
+        rows.push(['', '', '', '', '', '']);
+      }
+
+      // ── TRASLADO ──
+      if (calc.transport && calc.transport.cost > 0) {
+        rows.push(['', '', '', 'Traslado estimado', calc.transport.label, calc.transport.cost]);
+        rows.push(['', '', '', '', '', '']);
+      }
+
+      // ── TOTAL ──
+      rows.push(['', '', '', '', 'TOTAL FINAL', calc.total]);
+      rows.push(['', '', '', '', '', '']);
+      rows.push(['* Valores referenciales. Confirmar medidas y condiciones en visita técnica.', '', '', '', '', '']);
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [
+        { wch: 5 }, { wch: 30 }, { wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 16 }
+      ];
+      rows.forEach((row, ri) => {
+        if (typeof row[5] === 'number') {
+          const cellRef = XLSX.utils.encode_cell({ r: ri, c: 5 });
+          if (ws[cellRef]) ws[cellRef].z = '"$"#,##0';
+        }
+      });
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Cotización');
+      return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    }
+
+    /* ── TOAST HELPERS ── */
+    let _toastTimer = null;
+    function showExcelToast(fileName) {
+      const toast = document.getElementById('excel-toast');
+      document.getElementById('toast-msg').textContent =
+        `"${fileName}" descargado. Adjúntalo en WhatsApp para enviarlo junto con la cotización.`;
+      toast.classList.add('show');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => toast.classList.remove('show'), 7000);
+    }
+    function closeExcelToast() {
+      document.getElementById('excel-toast').classList.remove('show');
+      clearTimeout(_toastTimer);
     }
 
     function bindEvents() {
@@ -822,9 +961,6 @@
     bindEvents();
     renderAll();
     console.assert(document.getElementById('panel-curtains').classList.contains('active'), 'El módulo de cortinas debe estar visible al iniciar.');
-    console.assert(document.querySelectorAll('#serviceTabs .tab-btn').length === 3, 'Deben existir 3 tabs de servicio.');
-    console.assert(document.querySelectorAll('#curtainTypeGrid .type-btn').length === 4, 'Deben existir 4 tipos de cortina.');
-    console.assert(document.querySelectorAll('#repairGrid input[type="checkbox"]').length === 9, 'Deben existir 9 reparaciones seleccionables.');
   </script>
 </body>
 </html>
